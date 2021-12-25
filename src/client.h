@@ -9,12 +9,6 @@
 
 // stl
 #include <string>
-#include <sstream>
-#include <memory>
-#include <thread>
-#include <mutex>
-#include <atomic>
-#include <memory>
 #include <limits.h>
 #include <fstream>
 #include <iostream>

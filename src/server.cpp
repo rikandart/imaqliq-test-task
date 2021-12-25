@@ -29,38 +29,36 @@ void Server::setFileName(const std::string& fileName){
 // слушаем порт и сохраняем
 // для повторного считывания в файл необходим перезапуск
 bool Server::listenAndSave(){
-#ifdef UNIT_TEST
-    return _save("test string");
-#endif
     if(listen(_defSock, 1) == SOCKET_ERROR) return false;
     _accSock = accept(_defSock, nullptr, NULL);
     if(_accSock == INVALID_SOCKET) return false;
-    char buf[MAX_BUFFER];
-    ssize_t received = recv(_accSock, buf, MAX_BUFFER, 0);
-    if(received != -1 && received > 0){
+    char buf[MAX_BUFFER+1];
+    ssize_t received = MAX_BUFFER;
+    bool wrong = false;
+    std::ofstream os(_fn.c_str(), std::ios::out);
+    if(!os.is_open()){
+        errno = EIO;
+        wrong = true;
+    }
+    while(!wrong && received == MAX_BUFFER){
+        received = recv(_accSock, buf, MAX_BUFFER, 0);
         buf[received] = '\0';
-        if(_save(buf)){
-            std::string reply = "Succesfully written to " + _fn;
-            int sent = send(_accSock, reply.c_str(), reply.length(), 0);
-            if(sent != reply.length()) return false;
-        }
+        os << buf;
+    }
+    os.close();
+    if(!wrong && received != -1){
+        std::string reply = "Succesfully written to " + _fn;
+        int sent = send(_accSock, reply.c_str(), reply.length(), 0);
+        if(sent != reply.length()) return false;
     } else {
         errno = EINVAL;
-        return false;
+        std::string reply = "File error";
+        int sent = send(_accSock, reply.c_str(), reply.length(), 0);
+        if(sent != reply.length()) return false;
     }
     close(_accSock);
     shutdown(_accSock, SHUT_RDWR);
-    return true;
-}
-bool Server::_save(const char* data){
-    std::ofstream os(_fn.c_str());
-    if(!os.is_open()){
-        errno = EIO;
-        return false;
-    }
-    os << data;
-    os.close();
-    return true;
+    return !wrong;
 }
 
 #ifndef UNIT_TEST

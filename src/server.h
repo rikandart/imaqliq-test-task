@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <unistd.h>
@@ -10,11 +11,6 @@
 
 // stl
 #include <string>
-#include <memory>
-#include <thread>
-#include <mutex>
-#include <atomic>
-#include <memory>
 #include <limits.h>
 #include <fstream>
 #include <iostream>
@@ -31,7 +27,6 @@ class Server {
 	int _defSock = INVALID_SOCKET;
 	int _accSock = INVALID_SOCKET;
 	std::string _fn = "";
-	bool _save(const char* data);
 	bool _binded = false;
 public:
 	Server(const unsigned short port);

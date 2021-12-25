@@ -25,22 +25,21 @@ void Client::setFileName(const std::string& fileName){
 
 // чтение файла и отправка на сервер
 bool Client::_send(){
-    std::ifstream is(_fn.c_str());
+    std::ifstream is(_fn.c_str(), std::ios::in);
     if(!is.is_open()){
         errno = EIO;
         return false;
     }
+    is.seekg(0, std::ios::end);
     size_t size = is.tellg();
-    if (size > MAX_BUFFER){
-        errno = EFBIG;
-        return false;
-    }
-    std::stringstream sstr;
-    sstr << is.rdbuf();
-    std::string data = sstr.str();
-    std::cout << "Sending '" << data << "' from " << _fn << std::endl;
-    int sent = send(_sock, data.c_str(), data.length(), 0);
-    return sent == data.length();
+    is.seekg(0, std::ios::beg);
+    char* data = new char[size+1];
+    is.read(data, size);
+    data[size] = '\0';
+    std::cout << "Sending '" << _fn << "'" << std::endl;
+    int sent = send(_sock, data, size, 0);
+    delete[] data;
+    return true;
 }
 
 // отправка на сервер и получение ответа
@@ -49,7 +48,10 @@ bool Client::sendAndListen(){
     char buf[MAX_BUFFER];
     int len = read(_sock, buf, MAX_BUFFER);
     buf[len] = '\0';
-    std::cout << "TCP Daemon response:\n" << buf << std::endl;
+    if(len > 0)
+        std::cout << "TCP Daemon response:\n" << buf << std::endl;
+    else
+        std::cout << "TCP Daemon error" << std::endl;
     stop();
     return true;
 }
