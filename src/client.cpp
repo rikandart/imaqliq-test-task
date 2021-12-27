@@ -39,7 +39,7 @@ bool Client::_send(){
     std::cout << "Sending '" << _fn << "'" << std::endl;
     int sent = send(_sock, data, size, 0);
     delete[] data;
-    return true;
+    return sent==size;
 }
 
 // отправка на сервер и получение ответа
